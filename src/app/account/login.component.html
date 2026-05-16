@@ -7,44 +7,52 @@
         type="text"
         formControlName="email"
         class="form-control"
-        [ngClass]="{ 'is-invalid': submitted && f.email.errors }"
-      />
-      <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
-        Email is required
+        [ngClass]="{ 'is-invalid': submitted && f['email'].errors }"
+        />
+        @if (submitted && f['email'].errors) {
+          <div class="invalid-feedback">
+            Email is required
+          </div>
+        }
+        @if (f['email'].errors?.['email']) {
+          <div class="invalid-feedback">
+            Email is invalid
+          </div>
+        }
       </div>
-      <div *ngIf="f.email.errors?.email" class="invalid-feedback">
-        Email is invalid
-      </div>
-    </div>
 
-    <div class="mb-3">
-      <label class="form-label">Password</label>
-      <input
-        type="password"
-        formControlName="password"
-        class="form-control"
-        [ngClass]="{ 'is-invalid': submitted && f.password.errors }"
-      />
-      <div *ngIf="submitted && f.password.errors" class="invalid-feedback">
-        Password is required
-      </div>
-    </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input
+          type="password"
+          formControlName="password"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['password'].errors }"
+          />
+          @if (submitted && f['password'].errors) {
+            <div class="invalid-feedback">
+              Password is required
+            </div>
+          }
+        </div>
 
-    <div class="row">
-      <div class="mb-3 col text-center">
-        <button [disabled]="submitting" class="btn btn-primary">
-          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1"></span>
-          Login
-        </button>
-      </div>
-    </div>
+        <div class="row">
+          <div class="mb-3 col text-center">
+            <button [disabled]="submitting" class="btn btn-primary">
+              @if (submitting) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Login
+            </button>
+          </div>
+        </div>
 
-    <div class="mb-3 col text-center">
-      <a routerLink="/register" class="btn btn-link">Register</a>
-    </div>
+        <div class="mb-3 col text-center">
+          <a routerLink="/account/register" class="btn btn-link">Register</a>
+        </div>
 
-    <div class="mb-3 col text-center">
-      <a routerLink="/forgot-password" class="btn btn-link pe-8">Forgot Password?</a>
+        <div class="mb-3 col text-center">
+          <a routerLink="/account/forgot-password" class="btn btn-link">Forgot Password?</a>
+        </div>
+      </form>
     </div>
-  </form>
-</div>

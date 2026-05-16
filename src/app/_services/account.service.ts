@@ -27,7 +27,7 @@ export class AccountService {
     return this.accountSubject.value;
   }
 
-  // Login method
+  
   login(email: string, password: string): Observable<Account> {
     return this.http.post<Account>(`${baseUrl}/authenticate`, { email, password }, { withCredentials: true })
       .pipe(map((account: Account) => {
@@ -37,7 +37,7 @@ export class AccountService {
       }));
   }
 
-  // Logout method
+ 
   logout(): void {
     this.http.post<void>(`${baseUrl}/revoke-token`, {}, { withCredentials: true }).subscribe();
     this.stopRefreshTokenTimer();
@@ -45,7 +45,7 @@ export class AccountService {
     this.router.navigate(['/account/login']);
   }
 
-  // Refresh token method
+
   refreshToken(): Observable<Account> {
     return this.http.post<Account>(`${baseUrl}/refresh-token`, {}, { withCredentials: true })
       .pipe(map((account: Account) => {
