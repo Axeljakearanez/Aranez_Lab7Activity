@@ -112,86 +112,173 @@ npm start
 
 ---
 
-# 4) Update API URL (if your API runs elsewhere)
+## How the fake backend behaves (important for beginners)
 
-Edit the environment files:
+- Accounts are stored in your browser `localStorage`, not in a database.
+- "Emails" (verification + reset password links) are displayed in the UI as alerts because a browser-only app can't send real emails.
+- The first registered account becomes `Admin`, and all other accounts become `User`.
+
+If you want a clean slate while using the fake backend, clear site data in your browser or remove the local storage key:
 
 ```txt
-src/environments/environment.ts
-src/environments/environment.prod.ts
-```
-
-Update:
-
-```ts
-apiUrl: 'http://localhost:4000'
+angular-15-signup-verification-boilerplate-accounts
 ```
 
 ---
 
-# 5) Using the app (what to click)
+# 4) Using the app (what to click)
 
-- Register a new account
-- Verify email
-- Login
-- Access profile page
-- Access admin page (admin accounts only)
-- Reset password if forgotten
+This section assumes you are starting fresh and want to see the full flow.
+
+## A) Create an account
+
+1. Go to Register
+2. Fill in your details and submit
+3. If you are using the fake backend, a "verification email" will appear as an alert with a link
+4. Click the verification link (or paste it in the browser) to verify your account
+
+## B) Login
+
+1. Go to Login
+2. Enter your email + password
+3. On success you'll be redirected to the home page
+
+## C) Forgot password + reset password
+
+1. Go to Forgot Password
+2. Enter your email and submit
+3. If you are using the fake backend, a "reset password email" will appear as an alert with a link
+4. Click the reset link and set a new password
+
+## D) Profile and Admin areas
+
+- Profile pages allow you to view and update your own account details.
+- The Admin area is restricted to accounts with the `Admin` role.
 
 ---
 
-# 6) How authentication works
+# 5) How authentication works
 
-- JWT access token stored for authenticated requests
-- Refresh token stored in secure cookies
-- Interceptors automatically attach tokens
-- Route guards protect admin/user pages
+This boilerplate uses two tokens:
+
+- Access token (JWT): short-lived token used in the `Authorization: Bearer <token>` header
+- Refresh token: long-lived token stored in a cookie and sent with `withCredentials: true`
+
+### The important pieces
+
+- API base URL:
+  - `src/environments/environment.ts`
+
+- Account service (login/logout/refresh/register/etc.):
+  - `src/app/_services/account.service.ts`
+
+- App initializer (tries to refresh on first app load):
+  - `src/app/_helpers/app.initializer.ts`
+
+- JWT interceptor (adds the `Authorization` header for API calls):
+  - `src/app/_helpers/jwt.interceptor.ts`
+
+- Error interceptor (auto-logout on 401/403):
+  - `src/app/_helpers/error.interceptor.ts`
+
+### Flow: login
+
+1. Login component calls `AccountService.login(email, password)`
+2. The API returns an `Account` object that includes `jwtToken`
+3. The app stores the account in memory (`BehaviorSubject`) and starts a refresh timer
+4. For future API requests, the JWT interceptor attaches `Authorization: Bearer ...`
+
+### Flow: refresh token (important)
+
+1. The refresh token is sent to the API using cookies (`withCredentials: true`)
+2. The API responds with a new access token (`jwtToken`)
+3. The app schedules an automatic refresh about 1 minute before the access token expires
+4. When you reload the page, `APP_INITIALIZER` calls refresh immediately to restore the session (if the cookie is still valid)
+
+### Expected API endpoints
+
+The frontend calls these endpoints (base URL is `environment.apiUrl`):
+
+- `POST /accounts/authenticate`
+- `POST /accounts/refresh-token`
+- `POST /accounts/revoke-token`
+- `POST /accounts/register`
+- `POST /accounts/verify-email`
+- `POST /accounts/forgot-password`
+- `POST /accounts/validate-reset-token`
+- `POST /accounts/reset-password`
+- `GET /accounts` (Admin)
+- `GET /accounts/:id`
+- `POST /accounts` (Admin)
+- `PUT /accounts/:id`
+- `DELETE /accounts/:id`
+
+---
+
+# 6) Authorization (roles + route guards)
+
+Routes are protected with `AuthGuard`:
+
+- If you are not logged in, you are redirected to `/account/login`
+- If you are logged in but don't have the required role, you are redirected to `/`
+
+Role restrictions are applied using route data, for example:
+
+- `/admin` requires `Role.Admin`
+
+### Key files
+
+- `src/app/_helpers/auth.guard.ts`
+- `src/app/app-routing.module.ts`
 
 ---
 
 # 7) Project structure (quick tour)
 
+Most code lives under `src/app`:
+
 ```txt
-src/
- ├── app/
- │   ├── _components
- │   ├── _helpers
- │   ├── _models
- │   ├── _services
- │   ├── account
- │   ├── admin
- │   ├── home
- │   └── profile
+_services/   shared services (e.g. AccountService, AlertService)
+_helpers/    cross-cutting helpers (guards, interceptors, app initializer, fake backend)
+_models/     shared types and enums (Account, Role, Alert)
+account/     auth screens (login/register/verify/forgot/reset)
+profile/     user profile screens
+admin/       admin-only screens for account management
+```
+
+The UI is styled with Bootstrap via a CDN link in:
+
+```txt
+src/index.html
 ```
 
 ---
 
 # 8) Troubleshooting
 
-## npm install errors
+## The app redirects me back to login after refresh
 
-Try:
+- If you are using a real API, make sure it sets a refresh token cookie and supports `POST /accounts/refresh-token`
+- If your API runs on a different origin (different hostname/port), you must configure CORS to allow credentials and ensure cookies are set with the correct `SameSite`/`Secure` settings
 
-```bash
-npm install --legacy-peer-deps
-```
+## I'm calling an API on another port and cookies aren't being sent
 
-## Angular version issues
+This frontend uses `withCredentials: true` for login/refresh/revoke, but the backend must also:
 
-Check versions:
+- Enable CORS with credentials
+- Return `Access-Control-Allow-Credentials: true`
+- Allow the frontend origin in `Access-Control-Allow-Origin` (it cannot be `*` when using credentials)
 
-```bash
-ng version
-```
+## I want to reset the fake backend data
 
-## Start app
-
-```bash
-ng serve
-```
-
-Open:
+- Clear browser storage for the site, or remove the local storage key:
 
 ```txt
-http://localhost:4200
+angular-15-signup-verification-boilerplate-accounts
+```
+
+## Run unit tests
+
+```bash
+npm test
 ```
