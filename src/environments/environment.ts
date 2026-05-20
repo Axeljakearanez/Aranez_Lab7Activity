@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'https://aranezfinalbackend-production.up.railway.app'
+  apiUrl: 'https://aranezfinalbackend-production-c4f7.up.railway.app'
 };
 
 /*
